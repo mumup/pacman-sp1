@@ -491,45 +491,125 @@ Pacman.User = function (game, map) {
       return;
     }
 
-    ctx.fillStyle = "#fe11c5";
-    ctx.beginPath();
-    ctx.moveTo(
-      (position.x / 10) * size + half,
-      (position.y / 10) * size + half
-    );
+    if (pacmanImageLoaded) {
+      // 使用原有图片绘制死亡的Pacman，添加特效
+      const x = (position.x / 10) * size;
+      const y = (position.y / 10) * size;
+      const scale = 1.4; // 与正常Pacman相同的缩放系数
+      
+      // 保存当前上下文状态
+      ctx.save();
+      
+      // 移动到Pacman中心点
+      ctx.translate(
+        (position.x / 10) * size + half,
+        (position.y / 10) * size + half
+      );
+      
+      // 随着死亡动画进行旋转
+      ctx.rotate(amount * Math.PI * 4); // 旋转两圈
+      
+      // 设置透明度，随着amount增加而减少
+      ctx.globalAlpha = 1 - amount;
+      
+      // 随着死亡动画缩小
+      const deathScale = scale * (1 - amount * 0.5);
+      
+      // 绘制图片，使其居中
+      ctx.drawImage(
+        pacmanImage,
+        -half * deathScale,
+        -half * deathScale,
+        size * deathScale,
+        size * deathScale
+      );
+      
+      // 恢复上下文状态
+      ctx.restore();
+    } else {
+      // 如果图片未加载完成，使用原始绘制方法
+      ctx.fillStyle = "#fe11c5";
+      ctx.beginPath();
+      ctx.moveTo(
+        (position.x / 10) * size + half,
+        (position.y / 10) * size + half
+      );
 
-    ctx.arc(
-      (position.x / 10) * size + half,
-      (position.y / 10) * size + half,
-      half,
-      0,
-      Math.PI * 2 * amount,
-      true
-    );
+      ctx.arc(
+        (position.x / 10) * size + half,
+        (position.y / 10) * size + half,
+        half,
+        0,
+        Math.PI * 2 * amount,
+        true
+      );
 
-    ctx.fill();
+      ctx.fill();
+    }
   }
+
+  // 加载Pacman图片
+  const pacmanImage = new Image();
+  pacmanImage.src = "images/px.png";
+  let pacmanImageLoaded = false;
+  pacmanImage.onload = function () {
+    pacmanImageLoaded = true;
+  };
 
   function draw(ctx) {
     var s = map.blockSize,
       angle = calcAngle(direction, position);
 
-    ctx.fillStyle = "#fe11c5";
+    if (pacmanImageLoaded) {
+      // 使用图片绘制Pacman
+      const x = (position.x / 10) * s;
+      const y = (position.y / 10) * s;
 
-    ctx.beginPath();
+      // 保存当前上下文状态
+      ctx.save();
 
-    ctx.moveTo((position.x / 10) * s + s / 2, (position.y / 10) * s + s / 2);
+      // 移动到Pacman中心点
+      ctx.translate(
+        (position.x / 10) * s + s / 2,
+        (position.y / 10) * s + s / 2
+      );
 
-    ctx.arc(
-      (position.x / 10) * s + s / 2,
-      (position.y / 10) * s + s / 2,
-      s / 2,
-      Math.PI * angle.start,
-      Math.PI * angle.end,
-      angle.direction
-    );
+      // 根据方向旋转
+      let rotation = 0;
+      if (direction === RIGHT) rotation = 0;
+      else if (direction === DOWN) rotation = Math.PI / 2;
+      else if (direction === LEFT) rotation = Math.PI;
+      else if (direction === UP) rotation = (Math.PI * 3) / 2;
 
-    ctx.fill();
+      ctx.rotate(rotation);
+
+      // 绘制图片，使其居中，并放大1.3倍
+      const scale = 1.4; // 放大系数
+      ctx.drawImage(
+        pacmanImage,
+        (-s / 2) * scale,
+        (-s / 2) * scale,
+        s * scale,
+        s * scale
+      );
+
+      // 恢复上下文状态
+      ctx.restore();
+    } else {
+      // 如果图片未加载完成，使用原始绘制方法
+      ctx.fillStyle = "#fe11c5";
+      ctx.beginPath();
+      ctx.moveTo((position.x / 10) * s + s / 2, (position.y / 10) * s + s / 2);
+      ctx.arc(
+        (position.x / 10) * s + s / 2,
+        (position.y / 10) * s + s / 2,
+        s / 2,
+        Math.PI * angle.start,
+        Math.PI * angle.end,
+        angle.direction
+      );
+      ctx.fill();
+    }
   }
 
   initUser();
@@ -959,9 +1039,40 @@ var PACMAN = (function () {
   }
 
   function redrawBlock(pos) {
-    map.drawBlock(Math.floor(pos.y / 10), Math.floor(pos.x / 10), ctx);
-    map.drawBlock(Math.ceil(pos.y / 10), Math.ceil(pos.x / 10), ctx);
+    // 计算需要重绘的区域
+    const x = Math.floor(pos.x / 10);
+    const y = Math.floor(pos.y / 10);
+    
+    // 减小清除区域范围
+    const scale = 1.4; // 与Pacman图片的缩放系数相同
+    const s = map.blockSize;
+    const clearX = (x * s) - (s * (scale - 1) / 2);
+    const clearY = (y * s) - (s * (scale - 1) / 2);
+    const clearWidth = s * scale;
+    const clearHeight = s * scale;
+    
+    // 清除区域
+    ctx.fillStyle = "#000";
+    ctx.fillRect(clearX, clearY, clearWidth, clearHeight);
+    
+    // 只重绘当前块和相邻块
+    for (let i = y - 1; i <= y + 1; i++) {
+      for (let j = x - 1; j <= x + 1; j++) {
+        if (i >= 0 && i < map.height && j >= 0 && j < map.width) {
+          map.drawBlock(i, j, ctx);
+        }
+      }
+    }
+    
+    // 重绘墙壁 - 使用原始的drawWall函数
+    // drawWall(ctx);
+    
+    // 重绘药丸
+    map.drawPills(ctx);
   }
+  
+  // 移除不需要的drawWalls函数
+  // function drawWalls(ctx, x, y, width, height) { ... }
 
   function mainDraw() {
     var diff, u, i, len, nScore;
@@ -1147,8 +1258,8 @@ var PACMAN = (function () {
   return {
     init: init,
     user() {
-      return user
-    }
+      return user;
+    },
   };
 })();
 
