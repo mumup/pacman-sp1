@@ -575,11 +575,17 @@ Pacman.User = function (game, map) {
       );
 
       // 根据方向旋转
+      // 根据方向旋转
       let rotation = 0;
       if (direction === RIGHT) rotation = 0;
       else if (direction === DOWN) rotation = Math.PI / 2;
-      else if (direction === LEFT) rotation = Math.PI;
+      else if (direction === LEFT) rotation = 0; // 修改为0，让Pacman朝右
       else if (direction === UP) rotation = (Math.PI * 3) / 2;
+      
+      // 如果是向左移动，翻转图像
+      if (direction === LEFT) {
+        ctx.scale(-1, 1); // 水平翻转
+      }
 
       ctx.rotate(rotation);
 
