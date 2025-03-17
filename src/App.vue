@@ -158,12 +158,6 @@ onMounted(() => {
   window.setTimeout(function () {
     window.PACMAN.init(el, root);
   }, 0);
-
-  if (!window.localStorage.getItem("userName")) {
-    const userStr = prompt("Please enter your name.") || "";
-
-    window.localStorage.setItem("userName", userStr);
-  }
 });
 
 function stringToHex(str) {
@@ -182,6 +176,13 @@ function stringToHex(str) {
 const proofLoading = ref(false);
 
 function onProof() {
+  if (!window.localStorage.getItem("userName")) {
+    const userStr = prompt("Please enter your name.") || "";
+
+    window.localStorage.setItem("userName", userStr);
+    return
+  }
+
   const curr = window.PACMAN.user().theScore();
 
   if (curr <= 0) {
