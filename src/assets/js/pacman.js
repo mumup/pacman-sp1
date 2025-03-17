@@ -1,12 +1,5 @@
-/*jslint browser: true, undef: true, eqeqeq: true, nomen: true, white: true */
-/*global window: false, document: false */
-
-/*
- * fix looped audio
- * add fruits + levels
- * fix what happens when a ghost is eaten (should go back to base)
- * do proper ghost mechanics (blinky/wimpy etc)
- */
+import succinctPNG from '@/assets/images/succinct.png'
+import pxPNG from "@/assets/images/px.png"
 
 var NONE = 4,
   UP = 3,
@@ -295,6 +288,7 @@ Pacman.User = function (game, map) {
     due = null,
     lives = null,
     score = 5,
+    level = 1,
     keyMap = {};
 
   keyMap[KEY.ARROW_LEFT] = LEFT;
@@ -311,6 +305,10 @@ Pacman.User = function (game, map) {
 
   function theScore() {
     return score;
+  }
+
+  function theLevel() {
+    return level;
   }
 
   function loseLife() {
@@ -496,25 +494,25 @@ Pacman.User = function (game, map) {
       const x = (position.x / 10) * size;
       const y = (position.y / 10) * size;
       const scale = 1.4; // 与正常Pacman相同的缩放系数
-      
+
       // 保存当前上下文状态
       ctx.save();
-      
+
       // 移动到Pacman中心点
       ctx.translate(
         (position.x / 10) * size + half,
         (position.y / 10) * size + half
       );
-      
+
       // 随着死亡动画进行旋转
       ctx.rotate(amount * Math.PI * 4); // 旋转两圈
-      
+
       // 设置透明度，随着amount增加而减少
       ctx.globalAlpha = 1 - amount;
-      
+
       // 随着死亡动画缩小
       const deathScale = scale * (1 - amount * 0.5);
-      
+
       // 绘制图片，使其居中
       ctx.drawImage(
         pacmanImage,
@@ -523,7 +521,7 @@ Pacman.User = function (game, map) {
         size * deathScale,
         size * deathScale
       );
-      
+
       // 恢复上下文状态
       ctx.restore();
     } else {
@@ -550,7 +548,7 @@ Pacman.User = function (game, map) {
 
   // 加载Pacman图片
   const pacmanImage = new Image();
-  pacmanImage.src = "images/px.png";
+  pacmanImage.src = pxPNG;
   let pacmanImageLoaded = false;
   pacmanImage.onload = function () {
     pacmanImageLoaded = true;
@@ -581,7 +579,7 @@ Pacman.User = function (game, map) {
       else if (direction === DOWN) rotation = Math.PI / 2;
       else if (direction === LEFT) rotation = 0; // 修改为0，让Pacman朝右
       else if (direction === UP) rotation = (Math.PI * 3) / 2;
-      
+
       // 如果是向左移动，翻转图像
       if (direction === LEFT) {
         ctx.scale(-1, 1); // 水平翻转
@@ -670,7 +668,7 @@ Pacman.Map = function (size) {
     ctx.lineWidth = 5;
     ctx.lineCap = "round";
 
-    for (i = 0; i < Pacman.WALLS.length; i += 1) {
+    for (let i = 0; i < Pacman.WALLS.length; i += 1) {
       line = Pacman.WALLS[i];
       ctx.beginPath();
 
@@ -695,7 +693,8 @@ Pacman.Map = function (size) {
   }
 
   function reset() {
-    map = Pacman.MAP.clone();
+    // 使用JSON序列化和反序列化替代clone方法实现深拷贝
+    map = JSON.parse(JSON.stringify(Pacman.MAP));
     height = map.length;
     width = map[0].length;
   }
@@ -710,7 +709,7 @@ Pacman.Map = function (size) {
 
   // 加载SVG图片
   const pillImage = new Image();
-  pillImage.src = "images/succinct.png"; // 替换为你的SVG图片路径
+  pillImage.src = succinctPNG; // 替换为你的SVG图片路径
 
   // 确保图片加载完成后再执行绘制逻辑
   let isImageLoaded = false;
@@ -757,7 +756,7 @@ Pacman.Map = function (size) {
 
     drawWall(ctx);
 
-    for (i = 0; i < height; i += 1) {
+    for (let i = 0; i < height; i += 1) {
       for (j = 0; j < width; j += 1) {
         drawBlock(i, j, ctx);
       }
@@ -843,7 +842,7 @@ Pacman.Audio = function (game) {
   }
 
   function disableSound() {
-    for (var i = 0; i < playing.length; i++) {
+    for (let i = 0; i < playing.length; i++) {
       files[playing[i]].pause();
       files[playing[i]].currentTime = 0;
     }
@@ -857,7 +856,7 @@ Pacman.Audio = function (game) {
 
     files[name].removeEventListener("ended", endEvents[name], true);
 
-    for (i = 0; i < playing.length; i++) {
+    for (let i = 0; i < playing.length; i++) {
       if (!found && playing[i]) {
         found = true;
       } else {
@@ -879,13 +878,13 @@ Pacman.Audio = function (game) {
   }
 
   function pause() {
-    for (var i = 0; i < playing.length; i++) {
+    for (let i = 0; i < playing.length; i++) {
       files[playing[i]].pause();
     }
   }
 
   function resume() {
-    for (var i = 0; i < playing.length; i++) {
+    for (let i = 0; i < playing.length; i++) {
       files[playing[i]].play();
     }
   }
@@ -946,7 +945,7 @@ var PACMAN = (function () {
 
   function startLevel() {
     user.resetPosition();
-    for (var i = 0; i < ghosts.length; i += 1) {
+    for (let i = 0; i < ghosts.length; i += 1) {
       ghosts[i].reset();
     }
     audio.play("start");
@@ -1014,7 +1013,7 @@ var PACMAN = (function () {
 
     ctx.fillStyle = "#FFFF00";
 
-    for (var i = 0, len = user.getLives(); i < len; i++) {
+    for (let i = 0, len = user.getLives(); i < len; i++) {
       ctx.fillStyle = "#fe11c5";
       ctx.beginPath();
       ctx.moveTo(
@@ -1048,19 +1047,19 @@ var PACMAN = (function () {
     // 计算需要重绘的区域
     const x = Math.floor(pos.x / 10);
     const y = Math.floor(pos.y / 10);
-    
+
     // 减小清除区域范围
     const scale = 1.4; // 与Pacman图片的缩放系数相同
     const s = map.blockSize;
-    const clearX = (x * s) - (s * (scale - 1) / 2);
-    const clearY = (y * s) - (s * (scale - 1) / 2);
+    const clearX = x * s - (s * (scale - 1)) / 2;
+    const clearY = y * s - (s * (scale - 1)) / 2;
     const clearWidth = s * scale;
     const clearHeight = s * scale;
-    
+
     // 清除区域
     ctx.fillStyle = "#000";
     ctx.fillRect(clearX, clearY, clearWidth, clearHeight);
-    
+
     // 只重绘当前块和相邻块
     for (let i = y - 1; i <= y + 1; i++) {
       for (let j = x - 1; j <= x + 1; j++) {
@@ -1069,14 +1068,14 @@ var PACMAN = (function () {
         }
       }
     }
-    
+
     // 重绘墙壁 - 使用原始的drawWall函数
     // drawWall(ctx);
-    
+
     // 重绘药丸
     map.drawPills(ctx);
   }
-  
+
   // 移除不需要的drawWalls函数
   // function drawWalls(ctx, x, y, width, height) { ... }
 
@@ -1085,24 +1084,24 @@ var PACMAN = (function () {
 
     ghostPos = [];
 
-    for (i = 0, len = ghosts.length; i < len; i += 1) {
+    for (let i = 0, len = ghosts.length; i < len; i += 1) {
       ghostPos.push(ghosts[i].move(ctx));
     }
     u = user.move(ctx);
 
-    for (i = 0, len = ghosts.length; i < len; i += 1) {
+    for (let i = 0, len = ghosts.length; i < len; i += 1) {
       redrawBlock(ghostPos[i].old);
     }
     redrawBlock(u.old);
 
-    for (i = 0, len = ghosts.length; i < len; i += 1) {
+    for (let i = 0, len = ghosts.length; i < len; i += 1) {
       ghosts[i].draw(ctx);
     }
     user.draw(ctx);
 
     userPos = u["new"];
 
-    for (i = 0, len = ghosts.length; i < len; i += 1) {
+    for (let i = 0, len = ghosts.length; i < len; i += 1) {
       if (collided(userPos, ghostPos[i]["new"])) {
         if (ghosts[i].isVunerable()) {
           audio.play("eatghost");
@@ -1145,7 +1144,7 @@ var PACMAN = (function () {
         loseLife();
       } else {
         redrawBlock(userPos);
-        for (i = 0, len = ghosts.length; i < len; i += 1) {
+        for (let i = 0, len = ghosts.length; i < len; i += 1) {
           redrawBlock(ghostPos[i].old);
           ghostPos.push(ghosts[i].draw(ctx));
         }
@@ -1173,7 +1172,7 @@ var PACMAN = (function () {
     audio.play("eatpill");
     timerStart = tick;
     eatenCount = 0;
-    for (i = 0; i < ghosts.length; i += 1) {
+    for (let i = 0; i < ghosts.length; i += 1) {
       ghosts[i].makeEatable(ctx);
     }
   }
@@ -1217,7 +1216,7 @@ var PACMAN = (function () {
       map
     );
 
-    for (i = 0, len = ghostSpecs.length; i < len; i += 1) {
+    for (let i = 0, len = ghostSpecs.length; i < len; i += 1) {
       ghost = new Pacman.Ghost({ getTick: getTick }, map, ghostSpecs[i]);
       ghosts.push(ghost);
     }
@@ -1225,7 +1224,7 @@ var PACMAN = (function () {
     map.draw(ctx);
     dialog("Loading ...");
 
-    var extension = Modernizr.audio.ogg ? "ogg" : "mp3";
+    var extension = "mp3";
 
     var audio_files = [
       ["start", root + "audio/opening_song." + extension],
@@ -1573,18 +1572,7 @@ Pacman.WALLS = [
   ],
 ];
 
-Object.prototype.clone = function () {
-  var i,
-    newObj = this instanceof Array ? [] : {};
-  for (i in this) {
-    if (i === "clone") {
-      continue;
-    }
-    if (this[i] && typeof this[i] === "object") {
-      newObj[i] = this[i].clone();
-    } else {
-      newObj[i] = this[i];
-    }
-  }
-  return newObj;
-};
+// 移除了Object.prototype.clone方法，改用JSON序列化和反序列化实现深拷贝
+
+window.PACMAN = PACMAN
+window.Pacman = Pacman
